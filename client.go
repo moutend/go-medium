@@ -124,5 +124,4 @@ func (c *Client) User() (u *User, err error) {
 		return
 	}
 	return r.User(c)
-	return
 }

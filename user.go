@@ -20,15 +20,15 @@ type User struct {
 }
 
 // Post posts an article to the authenticated user's profile.
-func (u *User) Post(a Article) (pa *PostedArticle, err error) {
+func (u *User) Post(a Article) (*PostedArticle, error) {
 	path, _ := url.Parse("/users/" + u.ID + "/posts")
 	content, err := json.Marshal(a)
 	if err != nil {
-		return
+		return nil, err
 	}
 	r, err := u.client.post(path, bytes.NewReader(content))
 	if err != nil {
-		return
+		return nil, err
 	}
 	return r.PostedArticle(u.client)
 }

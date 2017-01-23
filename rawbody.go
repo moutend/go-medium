@@ -28,9 +28,8 @@ func (r rawbody) Error() error {
 	}
 	if len(i.Errors) > 0 {
 		return fmt.Errorf("%s (code:%d)", i.Errors[0].Message, i.Errors[0].Code)
-	} else {
-		return fmt.Errorf("broken response")
 	}
+	return fmt.Errorf("broken response")
 }
 
 func (r rawbody) User(c *Client) (*User, error) {
@@ -55,7 +54,7 @@ func (r rawbody) Publications(c *Client) ([]*Publication, error) {
 		Data []*Publication
 	}
 	err := decodeJSON(bytes.NewReader(r), &i)
-	for n, _ := range i.Data {
+	for n := range i.Data {
 		i.Data[n].client = c
 	}
 	return i.Data, err
