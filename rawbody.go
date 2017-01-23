@@ -10,6 +10,14 @@ import (
 
 type rawbody []byte
 
+func (r rawbody) Image() (*Image, error) {
+	var i struct {
+		Data Image
+	}
+	err := decodeJSON(bytes.NewReader(r), &i)
+	return &i.Data, err
+}
+
 func (r rawbody) Contributors() ([]*Contributor, error) {
 	var i struct {
 		Data []*Contributor

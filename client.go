@@ -4,9 +4,11 @@
 package medium
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -124,4 +126,48 @@ func (c *Client) User() (u *User, err error) {
 		return
 	}
 	return r.User(c)
+}
+
+func readImageFile(filename string) (body bytes.Buffer, err error) {
+	w := multipart.NewWriter(&body)
+	f, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	fw, err := w.CreateFormFile("image", filename)
+	if err != nil {
+		return
+	}
+	if _, err = io.Copy(fw, f); err != nil {
+		return
+	}
+	w.Close()
+	return
+}
+
+// Image upload an image.
+func (c *Client) Image(filename string) (i *Image, err error) {
+	path, _ := url.Parse("/images")
+	body, err := readImageFile(filename)
+	if err != nil {
+		return
+	}
+	req, err := c.newRequest("POST", path, &body)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=FormBoundaryXYZ")
+	res, err := c.do(req)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	var r rawbody
+	r, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	return r.Image()
 }
