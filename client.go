@@ -4,8 +4,6 @@
 package medium
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,17 +11,6 @@ import (
 	"net/url"
 	"os"
 )
-
-type rawbody []byte
-
-func (r rawbody) User(c *Client) (*User, error) {
-	var i struct {
-		Data User
-	}
-	err := decodeJSON(bytes.NewReader(r), &i)
-	i.Data.client = c
-	return &i.Data, err
-}
 
 // Client represents Medium API client.
 type Client struct {
@@ -101,12 +88,8 @@ func (c *Client) get(u *url.URL) (r rawbody, err error) {
 	r, err = ioutil.ReadAll(res.Body)
 	return
 }
-func (c *Client) post(u *url.URL, post Post) (r rawbody, err error) {
-	body, err := json.Marshal(post)
-	if err != nil {
-		return
-	}
-	req, err := c.newRequest("POST", u, bytes.NewReader(body))
+func (c *Client) post(u *url.URL, body io.Reader) (r rawbody, err error) {
+	req, err := c.newRequest("POST", u, body)
 	if err != nil {
 		return
 	}

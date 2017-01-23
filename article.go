@@ -3,15 +3,14 @@
 
 package medium
 
+// Article represents an article.
 type Article struct {
-	ID            string   `json:""id"`
-	Title         string   `json:""title"`
-	AuthorID      string   `json:""authorId"`
-	Tags          []string `json:""tags"`
-	URL           string   `json:""url"`
-	CanonicalURL  string   `json:""canonicalUrl"`
-	PublishStatus string   `json:""publishStatus"`
-	PublishAt     int      `json:""publishedAt"`
-	License       string   `json:""license"`
-	LicenseURL    string   `json:""licenseUrl"`
+	Title           string   `json:"title"`
+	ContentFormat   string   `json:"contentFormat"`
+	Content         string   `json:"content"`
+	CanonicalURL    string   `json:"canonicalUrl"`
+	Tags            []string `json:"tags"`
+	PublishStatus   string   `json:"publishStatus"`
+	License         string   `json:license"`
+	NotifyFollowers bool     `json:"notifyFollowers"`
 }

@@ -5,6 +5,7 @@ package medium
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/url"
 )
 
@@ -18,30 +19,15 @@ type User struct {
 	client   *Client
 }
 
-func (r rawbody) Article(c *Client) (*Article, error) {
-	var i struct {
-		Data *Article
-	}
-	err := decodeJSON(bytes.NewReader(r), &i)
-	return i.Data, err
-}
-
-func (r rawbody) Publications(c *Client) ([]*Publication, error) {
-	var i struct {
-		Data []*Publication
-	}
-	err := decodeJSON(bytes.NewReader(r), &i)
-	for n, _ := range i.Data {
-		i.Data[n].client = c
-	}
-	return i.Data, err
-}
-
-// Post creates a post on the authenticated user's profile page.
-func (u *User) Post(post Post) (a *Article, err error) {
+// Post posts an article to the authenticated user's profile.
+func (u *User) Post(a Article) (pa *PostedArticle, err error) {
 	path, _ := url.Parse("/users/" + u.ID + "/posts")
-	r, err := u.client.post(path, post)
-	return r.Article(u.client)
+	content, err := json.Marshal(a)
+	if err != nil {
+		return
+	}
+	r, err := u.client.post(path, bytes.NewReader(content))
+	return r.PostedArticle(u.client)
 }
 
 // Publications returns specified user's publications.
