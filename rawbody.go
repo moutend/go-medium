@@ -10,7 +10,14 @@ import (
 
 type rawbody []byte
 
-//debug: {"errors":[{"message":"Invalid publishStatus specified.","code":2008}]}
+func (r rawbody) Contributors() ([]*Contributor, error) {
+	var i struct {
+		Data []*Contributor
+	}
+	err := decodeJSON(bytes.NewReader(r), &i)
+	return i.Data, err
+}
+
 func (r rawbody) Error() error {
 	var i struct {
 		Errors []Error
