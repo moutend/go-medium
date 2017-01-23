@@ -27,5 +27,8 @@ func (p *Publication) Post(a Article) (pa *PostedArticle, err error) {
 		return
 	}
 	r, err := p.client.post(path, bytes.NewReader(content))
+	if err != nil {
+		return
+	}
 	return r.PostedArticle(p.client)
 }

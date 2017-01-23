@@ -27,6 +27,9 @@ func (u *User) Post(a Article) (pa *PostedArticle, err error) {
 		return
 	}
 	r, err := u.client.post(path, bytes.NewReader(content))
+	if err != nil {
+		return
+	}
 	return r.PostedArticle(u.client)
 }
 

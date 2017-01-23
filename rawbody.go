@@ -5,9 +5,26 @@ package medium
 
 import (
 	"bytes"
+	"fmt"
 )
 
 type rawbody []byte
+
+//debug: {"errors":[{"message":"Invalid publishStatus specified.","code":2008}]}
+func (r rawbody) Error() error {
+	var i struct {
+		Errors []Error
+	}
+	err := decodeJSON(bytes.NewReader(r), &i)
+	if err != nil {
+		return err
+	}
+	if len(i.Errors) > 0 {
+		return fmt.Errorf("%s (code:%d)", i.Errors[0].Message, i.Errors[0].Code)
+	} else {
+		return fmt.Errorf("broken response")
+	}
+}
 
 func (r rawbody) User(c *Client) (*User, error) {
 	var i struct {

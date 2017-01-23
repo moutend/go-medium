@@ -12,6 +12,12 @@ import (
 	"os"
 )
 
+// Error represents medium API.
+type Error struct {
+	Message string `json:"message"`
+	Code    int    `json:"code"`
+}
+
 // Client represents Medium API client.
 type Client struct {
 	Root              *url.URL
@@ -101,6 +107,12 @@ func (c *Client) post(u *url.URL, body io.Reader) (r rawbody, err error) {
 	defer res.Body.Close()
 
 	r, err = ioutil.ReadAll(res.Body)
+	if res.StatusCode >= 400 {
+		err = r.Error()
+		c.logger.Println(err)
+		return
+	}
+	c.logger.Println(string(r))
 	return
 }
 
