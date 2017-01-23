@@ -1,0 +1,6 @@
+*log
+log*
+bin/
+vendor/
+_devtools/
+testdata/json/*/
