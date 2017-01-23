@@ -5,6 +5,7 @@ package medium
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,9 +16,13 @@ import (
 
 type rawbody []byte
 
-func (r rawbody) User() (u *User, err error) {
-	err = decodeJSON(bytes.NewReader(r), u)
-	return
+func (r rawbody) User(c *Client) (*User, error) {
+	var i struct {
+		Data User
+	}
+	err := decodeJSON(bytes.NewReader(r), &i)
+	i.Data.client = c
+	return &i.Data, err
 }
 
 // Client represents Medium API client.
@@ -81,8 +86,27 @@ func (c *Client) do(req *http.Request) (res *http.Response, err error) {
 	return
 }
 
-func (c *Client) get(u *url.URL, body io.Reader) (r rawbody, err error) {
-	req, err := c.newRequest("GET", u, body)
+func (c *Client) get(u *url.URL) (r rawbody, err error) {
+	req, err := c.newRequest("GET", u, nil)
+	if err != nil {
+		return
+	}
+
+	res, err := c.do(req)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	r, err = ioutil.ReadAll(res.Body)
+	return
+}
+func (c *Client) post(u *url.URL, post Post) (r rawbody, err error) {
+	body, err := json.Marshal(post)
+	if err != nil {
+		return
+	}
+	req, err := c.newRequest("POST", u, bytes.NewReader(body))
 	if err != nil {
 		return
 	}
@@ -97,12 +121,13 @@ func (c *Client) get(u *url.URL, body io.Reader) (r rawbody, err error) {
 	return
 }
 
+// User returns the authenticated user's details.
 func (c *Client) User() (u *User, err error) {
 	path, _ := url.Parse("/me")
-	r, err := c.get(path, nil)
+	r, err := c.get(path)
 	if err != nil {
 		return
 	}
-	return r.User()
+	return r.User(c)
 	return
 }
