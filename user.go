@@ -38,7 +38,7 @@ func (u *User) Post(a Article) (*PostedArticle, error) {
 
 // Publications returns specified user's publications.
 func (u *User) Publications() (p []*Publication, err error) {
-	req, err := u.client.newRequest("GET", "/users", nil)
+	req, err := u.client.newRequest("GET", "/users/"+u.ID+"/publications", nil)
 	if err != nil {
 		return
 	}
