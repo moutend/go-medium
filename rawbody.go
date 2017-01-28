@@ -67,3 +67,9 @@ func (r rawbody) Publications(c *Client) ([]*Publication, error) {
 	}
 	return i.Data, err
 }
+
+func (r rawbody) Token() (*Token, error) {
+	var i Token
+	err := decodeJSON(bytes.NewReader(r), &i)
+	return &i, err
+}

@@ -1,17 +1,21 @@
 // Author: Yoshiyuki Koyanagi <moutend@gmail.com>
 // License: mIT
 
+// Package medium provides thin wrapper for Medium API.
 package medium
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
+	"strings"
 )
 
 // Error represents medium API.
@@ -34,24 +38,25 @@ type Client struct {
 }
 
 // NewClient returns API client.
-func NewClient(logger *log.Logger) (c *Client) {
-	if logger == nil {
-		logger = log.New(ioutil.Discard, "discard logging messages", log.LstdFlags)
-	}
+func NewClient(clientID, clientSecret, accessToken string) (c *Client) {
 	u, _ := url.Parse("https://api.medium.com/v1")
-	token := os.Getenv("MEDIUM_API_TOKEN")
 	return &Client{
-		Root:        u,
-		AccessToken: token,
-		httpClient:  &http.Client{},
-		logger:      logger,
-		name:        "go-medium",
-		version:     version,
+		Root:              u,
+		AccessToken:       accessToken,
+		ApplicationID:     clientID,
+		ApplicationSecret: clientSecret,
+		httpClient:        &http.Client{},
+		logger:            log.New(ioutil.Discard, "discard logging messages", log.LstdFlags),
+		name:              "go-medium",
+		version:           version,
 	}
-
 }
 
-func (c *Client) newRequest(method string, u *url.URL, body io.Reader) (req *http.Request, err error) {
+func (c *Client) newRequest(method, path string, body io.Reader) (req *http.Request, err error) {
+	u, err := url.Parse(path)
+	if err != nil {
+		return
+	}
 	if u.Host == "" {
 		u, err = url.Parse(c.Root.String() + u.String())
 		if err != nil {
@@ -73,101 +78,100 @@ func (c *Client) newRequest(method string, u *url.URL, body io.Reader) (req *htt
 	return
 }
 
-func (c *Client) do(req *http.Request) (res *http.Response, err error) {
-	if res, err = c.httpClient.Do(req); err != nil {
+func (c *Client) do(req *http.Request) (r rawbody, err error) {
+	for k, v := range req.Header {
+		c.logger.Printf("%s: %s", k, strings.Join(v, ""))
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
 		return
 	}
+	defer res.Body.Close()
+
 	c.logger.Printf("%s %s\n", res.Proto, res.Status)
-	return
-}
-
-func (c *Client) get(u *url.URL) (r rawbody, err error) {
-	req, err := c.newRequest("GET", u, nil)
-	if err != nil {
-		return
-	}
-
-	res, err := c.do(req)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-
 	r, err = ioutil.ReadAll(res.Body)
-	return
-}
-func (c *Client) post(u *url.URL, body io.Reader) (r rawbody, err error) {
-	req, err := c.newRequest("POST", u, body)
 	if err != nil {
 		return
 	}
-
-	res, err := c.do(req)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-
-	r, err = ioutil.ReadAll(res.Body)
 	if res.StatusCode >= 400 {
 		err = r.Error()
-		c.logger.Println(err)
 		return
 	}
-	c.logger.Println(string(r))
 	return
 }
 
 // User returns the authenticated user's details.
 func (c *Client) User() (u *User, err error) {
-	path, _ := url.Parse("/me")
-	r, err := c.get(path)
+	req, err := c.newRequest("GET", "/me", nil)
+	if err != nil {
+		return
+	}
+	r, err := c.do(req)
 	if err != nil {
 		return
 	}
 	return r.User(c)
 }
 
-func readImageFile(filename string) (body bytes.Buffer, err error) {
-	w := multipart.NewWriter(&body)
+func readImageFile(filename string) (body []byte, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return
 	}
 	defer f.Close()
-	fw, err := w.CreateFormFile("image", filename)
+
+	buf := bytes.Buffer{}
+	w := multipart.NewWriter(&buf)
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="image"; filename="%s"`, filename))
+	h.Set("Content-Type", "image/jpeg")
+
+	part, err := w.CreatePart(h)
 	if err != nil {
 		return
 	}
-	if _, err = io.Copy(fw, f); err != nil {
+	if _, err = io.Copy(part, f); err != nil {
 		return
 	}
 	w.Close()
-	return
+	return buf.Bytes(), nil
 }
 
 // Image upload an image.
 func (c *Client) Image(filename string) (i *Image, err error) {
-	path, _ := url.Parse("/images")
 	body, err := readImageFile(filename)
 	if err != nil {
 		return
 	}
-	req, err := c.newRequest("POST", path, &body)
+	req, err := c.newRequest("POST", "/images", bytes.NewReader(body))
 	if err != nil {
 		return
 	}
-	req.Header.Set("Content-Type", "multipart/form-data; boundary=FormBoundaryXYZ")
-	res, err := c.do(req)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-
-	var r rawbody
-	r, err = ioutil.ReadAll(res.Body)
+	r, err := c.do(req)
 	if err != nil {
 		return
 	}
 	return r.Image()
+}
+
+// SetLogger sets logger.
+func (c *Client) SetLogger(logger *log.Logger) {
+	c.logger = logger
+	return
+}
+func (c *Client) Token(code, redirectURI string) (token *Token, err error) {
+	body := strings.NewReader(fmt.Sprintf("code=%s&client_id=%s&client_secret=%s&grant_type=authorization_code&redirect_uri=%s", code, c.ApplicationID, c.ApplicationSecret, url.QueryEscape(redirectURI)))
+	req, err := c.newRequest("POST", "/tokens", body)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Del("Authorization")
+	r, err := c.do(req)
+	if err != nil {
+		return
+	}
+	return r.Token()
 }

@@ -6,7 +6,6 @@ package medium
 import (
 	"bytes"
 	"encoding/json"
-	"net/url"
 )
 
 // User represents a Medium user
@@ -21,12 +20,16 @@ type User struct {
 
 // Post posts an article to the authenticated user's profile.
 func (u *User) Post(a Article) (*PostedArticle, error) {
-	path, _ := url.Parse("/users/" + u.ID + "/posts")
+	path := "/users/" + u.ID + "/posts"
 	content, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
-	r, err := u.client.post(path, bytes.NewReader(content))
+	req, err := u.client.newRequest("POST", path, bytes.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	r, err := u.client.do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +38,11 @@ func (u *User) Post(a Article) (*PostedArticle, error) {
 
 // Publications returns specified user's publications.
 func (u *User) Publications() (p []*Publication, err error) {
-	path, _ := url.Parse("/users/" + u.ID + "/publications")
-	r, err := u.client.get(path)
+	req, err := u.client.newRequest("GET", "/users", nil)
+	if err != nil {
+		return
+	}
+	r, err := u.client.do(req)
 	if err != nil {
 		return
 	}

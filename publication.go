@@ -6,7 +6,6 @@ package medium
 import (
 	"bytes"
 	"encoding/json"
-	"net/url"
 )
 
 // Publication represents a Medium Publication.
@@ -21,12 +20,16 @@ type Publication struct {
 
 // Post posts an article to the authenticated user's publication.
 func (p *Publication) Post(a Article) (*PostedArticle, error) {
-	path, _ := url.Parse("/publications/" + p.ID + "/posts")
+	path := "/publications/" + p.ID + "/posts"
 	content, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
-	r, err := p.client.post(path, bytes.NewReader(content))
+	req, err := p.client.newRequest("POST", path, bytes.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	r, err := p.client.do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +38,11 @@ func (p *Publication) Post(a Article) (*PostedArticle, error) {
 
 // Contributors returns a list of contributors for the publication.
 func (p *Publication) Contributors() ([]*Contributor, error) {
-	path, _ := url.Parse("/publications/" + p.ID + "/contributors")
-	r, err := p.client.get(path)
+	req, err := p.client.newRequest("GET", "/publications/"+p.ID+"/contributors", nil)
+	if err != nil {
+		return nil, err
+	}
+	r, err := p.client.do(req)
 	if err != nil {
 		return nil, err
 	}
