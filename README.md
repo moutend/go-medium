@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/release/moutend/go-medium.svg?style=flat-square)][release]
 [![Go Documentation](https://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
-[![CircleCI](https://circleci.com/gh/moutend/go-medium/tree/master.svg?style=svg&circle-token=7555891ce81c70dfcfd4279e73d9043a53e5129d)][status]
+[![CircleCI](https://circleci.com/gh/moutend/go-medium.svg?style=svg&circle-token=2227e983ccd1eafc5f05f66ade52b7030ff0b18c)](https://circleci.com/gh/moutend/go-medium)
 
 [release]: https://github.com/moutend/go-medium/releases
 [godocs]: https://godoc.org/github.com/moutendgo-medium/
