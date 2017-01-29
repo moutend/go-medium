@@ -1,0 +1,18 @@
+{
+  "data": {
+    "id": "xxxxxxxx",
+    "title": "Test article",
+    "authorId": "AAAAAAAA",
+    "tags": [
+      "foo",
+      "bar",
+      "2000"
+    ],
+    "url": "https://medium.com/@test/test-article-e6f36a",
+    "canonicalUrl": "http://example.com/posts/test-article",
+    "publishStatus": "public",
+    "publishedAt": 1442286338435,
+    "license": "all-rights-reserved",
+    "licenseUrl": "https://medium.com/policy/9db0094a1e0f"
+  }
+}

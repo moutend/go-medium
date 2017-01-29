@@ -1,0 +1,29 @@
+{
+  "data": [
+    {
+      "publicationId": "xxxxxxxx",
+      "userId": "XXXXXXXX",
+      "role": "editor"
+    },
+    {
+      "publicationId": "yyyyyyyy",
+      "userId": "YYYYYYYY",
+      "role": "editor"
+    },
+    {
+      "publicationId": "zzzzzzzz",
+      "userId": "ZZZZZZZZ",
+      "role": "editor"
+    },
+    {
+      "publicationId": "b45573563f5a",
+      "userId": "196f70942410555f4b3030debc4f199a0d5a0309a7b9df96c57b8ec6e4b5f11d7",
+      "role": "writer"
+    },
+    {
+      "publicationId": "zzzzzzzz",
+      "userId": "AAAAAAAA",
+      "role": "writer"
+    }
+  ]
+}
