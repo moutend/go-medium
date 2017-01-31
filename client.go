@@ -89,7 +89,6 @@ func (c *Client) do(req *http.Request) (r rawbody, err error) {
 	}
 	defer res.Body.Close()
 
-	c.logger.Println("@@@")
 	c.logger.Printf("%s %s\n", res.Proto, res.Status)
 	if r, err = ioutil.ReadAll(res.Body); err != nil {
 		return
