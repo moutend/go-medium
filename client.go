@@ -113,9 +113,6 @@ func (c *Client) postArticle(mode, id string, a Article) (*PostedArticle, error)
 		}
 		a.PublishedAt = time.Now().In(local).Format("2006-01-02T15:04:05+07:00")
 	}
-	if a.PublishStatus == "" {
-		a.PublishStatus = "public"
-	}
 	if a.Title == "" {
 		return nil, fmt.Errorf("title of the article must not be blank")
 	}
