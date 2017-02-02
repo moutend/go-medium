@@ -11,6 +11,7 @@ type Article struct {
 	CanonicalURL    string   `json:"canonicalUrl"`
 	Tags            []string `json:"tags"`
 	PublishStatus   string   `json:"publishStatus"`
+	PublishedAt     string   `json:"publishedAt"`
 	License         string   `json:"license"`
 	NotifyFollowers bool     `json:"notifyFollowers"`
 }

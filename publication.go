@@ -3,11 +3,6 @@
 
 package medium
 
-import (
-	"bytes"
-	"encoding/json"
-)
-
 // Publication represents a Medium Publication.
 type Publication struct {
 	ID          string `json:"id"`
@@ -20,20 +15,7 @@ type Publication struct {
 
 // Post posts an article to the authenticated user's publication.
 func (p *Publication) Post(a Article) (*PostedArticle, error) {
-	path := "/publications/" + p.ID + "/posts"
-	content, err := json.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-	req, err := p.client.newRequest("POST", path, bytes.NewReader(content))
-	if err != nil {
-		return nil, err
-	}
-	r, err := p.client.do(req)
-	if err != nil {
-		return nil, err
-	}
-	return r.PostedArticle(p.client)
+	return p.client.postArticle("publications", p.ID, a)
 }
 
 // Contributors returns a list of contributors for the publication.

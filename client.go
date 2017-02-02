@@ -6,6 +6,7 @@ package medium
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 // Error represents medium API.
@@ -98,6 +100,46 @@ func (c *Client) do(req *http.Request) (r rawbody, err error) {
 		return
 	}
 	return
+}
+
+func (c *Client) postArticle(mode, id string, a Article) (*PostedArticle, error) {
+	if a.PublishedAt == "" {
+		// I don't know why but Medium API doesn't accept the article published after UTC+07:00.
+		// For example, Japan Standard Time is UTC+09:00, so that the article posted from Japan will be rejected.
+		// We need set current UTC timezone to Etc/GMT-7 (+07:00) before formatting date and time.
+		local, err := time.LoadLocation("Etc/GMT-7")
+		if err != nil {
+			return nil, err
+		}
+		a.PublishedAt = time.Now().In(local).Format("2006-01-02T15:04:05+07:00")
+	}
+	if a.PublishStatus == "" {
+		a.PublishStatus = "public"
+	}
+	if a.Title == "" {
+		a.Title = "Untitled"
+	}
+	if a.ContentFormat != "html" && a.ContentFormat != "markdown" {
+		return nil, fmt.Errorf("only \"html\" and \"markdown\" are valid as content format")
+	}
+	if a.Content == "" {
+		return nil, fmt.Errorf("content should not be blank")
+	}
+	c.logger.Println(a.PublishStatus, a.PublishedAt)
+	content, err := json.Marshal(a)
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf("/%s/%s/posts", mode, id)
+	req, err := c.newRequest("POST", path, bytes.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	r, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+	return r.PostedArticle(c)
 }
 
 // User returns the authenticated user's details.
