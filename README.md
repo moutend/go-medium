@@ -10,10 +10,11 @@
 [license]: https://github.com/moutend/go-medium/blob/master/LICENSE
 [status]: https://circleci.com/gh/moutend/go-medium
 
-`go-medium` is Medium API client for Go.
+`go-medium` is a Medium API client for Go.
 
-As you know, Medium provides official API client for Go, literally named [medium-sdk-go](https://github.com/Medium/medium-sdk-go).
-However, that client seems to be not able to publish an article to the authorized user's publications, I decided to implement alternative Go client for Medium.
+As you know, Medium provides an official API client for Go, literally named [medium-sdk-go](https://github.com/Medium/medium-sdk-go).
+However, that client is not able to publish an article to the authorized user's publications.
+I decided to implement alternative Go client for Medium.
 
 # Installation
 
@@ -23,7 +24,25 @@ $ go install github.com/moutend/go-medium
 
 # Usage
 
-In the following example, an article written in markdown will be published at the publication owned by authorized user.
+## Initialize client
+
+First off, you need initialize a client like this:
+
+```go
+c := medium.NewClient(clientID, clientSecret, accessToken)
+```
+
+It's not recommended  but if you want to use self-issued token, set `clientID` and `clientSecret` blank.
+
+## Example
+
+In the following example, it demonstrates the steps below:
+
+- Initialize a client.
+- Get information about current authorized user.
+- Get publications owned by current authorized user.
+- Create an article as Markdown format.
+- Post the article to the first publication.
 
 ```go
 package main
@@ -36,31 +55,46 @@ import (
 )
 
 func main() {
-	clientID := "XXXXXXXX"
-	clientSecret := "YYYYYYYY"
-	accessToken := "ZZZZZZZ"
-	c := medium.NewClient(clientID, clientSecret, accessToken)
+	// It's not recommended, but it uses self-issued token in this example.
+	accessToken := "self-issued-access-token"
+	c := medium.NewClient("", "", accessToken)
+
+	// Get information about current authorized user.
+	// See user.go to check all exported fields.
 	u, err := c.User()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Get detail of all publications.
+	fmt.Printf("You are logged in as %s.", u.Username)
+
+	// Get list of publications.
 	ps, err := u.Publications()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// If the user has no publications yet, exit with error message.
+	// It assumes that the user has one or more publications.
+	// See publication.go to check all exported fields.
 	if len(ps) == 0 {
 		log.Fatalf("%s has no publications yet.\n", u.Username)
 	}
-	// Post an article to the first publication.
-	a, err := ps[0].Post(medium.Article{
+	fmt.Printf("You have a publication named %s.\n", ps[0].Name)
+
+	// Publish an article as Markdown format.
+	// For more dail, see next section.
+	article := medium.Article{
 		Title:         "test",
 		ContentFormat: "markdown",
-		Content: `# Test article
+		Content: `# Test
 
-This article was posted from command line.`,
-	})
+## Sub title
+
+# Using Medium API
+
+This article was published from command line.`,
+	}
+	// Publish an article to the first publication.
+	// See article.go to check all exported fields of PostedArticle.
+	pa, err := ps[0].Post(article)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +102,29 @@ This article was posted from command line.`,
 }
 ```
 
-If you are using self-issued token, please specify empty string `""` as the client ID and client secret.
+# Notes
+
+## Published date and time of Article
+
+If you want to specify the field `PublishedAt` of Article, it must be formatted according to the layout below:
+
+```
+2006-01-02T15:04:05+07000
+```
+
+Note that you cannot specify the date and time after UTC+07:00.
+I don't know why but it seems to be specification of the Medium API v1.
+For example, Japan standard Time is UTC+09:00, the article posted from machine which timezone is set as JST will be rejected.
+Also, you cannot specify the date and time before Jan 1st, 1970.
+
+The `PublishedAt` field will be set as current time if you didn't specify it.
+
+## Setting up API token with OAuth
+
+`go-medium` doesn't provide the method for obtaining API token with OAuth.
+However, it has `Token` method which receives shortlive code and redirect URI, and then generate a new token for Medium API.
+
+One way to generate API token with OAuth is launching the local web server and redirect HTTP request to that web server.
 
 # LICENSE
 
