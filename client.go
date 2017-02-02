@@ -117,7 +117,7 @@ func (c *Client) postArticle(mode, id string, a Article) (*PostedArticle, error)
 		a.PublishStatus = "public"
 	}
 	if a.Title == "" {
-		a.Title = "Untitled"
+		return nil, fmt.Errorf("title of the article must not be blank")
 	}
 	if a.ContentFormat != "html" && a.ContentFormat != "markdown" {
 		return nil, fmt.Errorf("only \"html\" and \"markdown\" are valid as content format")
