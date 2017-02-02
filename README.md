@@ -24,8 +24,6 @@ $ go install github.com/moutend/go-medium
 
 # Usage
 
-## Initialize client
-
 First off, you need initialize a client like this:
 
 ```go
@@ -34,15 +32,17 @@ c := medium.NewClient(clientID, clientSecret, accessToken)
 
 It's not recommended  but if you want to use self-issued token, set `clientID` and `clientSecret` blank.
 
-## Example
+`go-medium` doesn't provide a method for generating API token with client ID and client secret.
+However, it provides `Token` method which generates a new API token based off shortlive code and redirect URI.
+One way to generate API token with OAuth is launching the local web server and redirect HTTP request to that web server.
 
 In the following example, it demonstrates the steps below:
 
-- Initialize a client.
+- Initialize a client with self-issued token.
 - Get information about current authorized user.
 - Get publications owned by current authorized user.
 - Create an article as Markdown format.
-- Post the article to the first publication.
+- Post the article to the publication.
 
 ```go
 package main
@@ -102,29 +102,22 @@ This article was published from command line.`,
 }
 ```
 
-# Notes
+## Specifying `PublishedAt`
 
-## Published date and time of Article
-
-If you want to specify the field `PublishedAt` of Article, it must be formatted according to the layout below:
+The default value of `medium.Article.PublishedAt` is current time, you don't have to specify when the article was published at.
+However, if you want to specify it, the timestamp must be formatted according to the layout below:
 
 ```
 2006-01-02T15:04:05+07000
 ```
 
-Note that you cannot specify the date and time after UTC+07:00.
-I don't know why but it seems to be specification of the Medium API v1.
+## Valid range of published date
+
+Note that you cannot specify the timestamp after current UTC+07:00.
+I don't know why but it will be treated as future post and Medium API will reject that post.
 For example, Japan standard Time is UTC+09:00, the article posted from machine which timezone is set as JST will be rejected.
+
 Also, you cannot specify the date and time before Jan 1st, 1970.
-
-The `PublishedAt` field will be set as current time if you didn't specify it.
-
-## Setting up API token with OAuth
-
-`go-medium` doesn't provide the method for obtaining API token with OAuth.
-However, it has `Token` method which receives shortlive code and redirect URI, and then generate a new token for Medium API.
-
-One way to generate API token with OAuth is launching the local web server and redirect HTTP request to that web server.
 
 # LICENSE
 
