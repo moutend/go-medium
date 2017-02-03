@@ -5,7 +5,7 @@ package medium
 
 // Token represents response from /v1/tokens.
 type Token struct {
-	TokenType    string   `json:"token_type": "`
+	TokenType    string   `json:"token_type"`
 	AccessToken  string   `json:"access_token"`
 	RefreshToken string   `json:"refresh_token"`
 	Scope        []string `json:"scope"`
