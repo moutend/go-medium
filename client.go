@@ -199,8 +199,26 @@ func (c *Client) SetLogger(logger *log.Logger) {
 	c.logger = logger
 	return
 }
+
+// Token gets a new API token based off shortlive code and redirect URI.
 func (c *Client) Token(code, redirectURI string) (token *Token, err error) {
 	body := strings.NewReader(fmt.Sprintf("code=%s&client_id=%s&client_secret=%s&grant_type=authorization_code&redirect_uri=%s", code, c.ApplicationID, c.ApplicationSecret, url.QueryEscape(redirectURI)))
+	req, err := c.newRequest("POST", "/tokens", body)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Del("Authorization")
+	r, err := c.do(req)
+	if err != nil {
+		return
+	}
+	return r.Token()
+}
+
+// RefreshToken gets a new API token based off refresh token.
+func (c *Client) RefreshToken(refreshToken string) (token *Token, err error) {
+	body := strings.NewReader(fmt.Sprintf("refresh_token=%s&client_id=%s&client_secret=%s&grant_type=refresh_token", refreshToken, c.ApplicationID, c.ApplicationSecret))
 	req, err := c.newRequest("POST", "/tokens", body)
 	if err != nil {
 		return
