@@ -17,7 +17,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"time"
 )
 
 // Error represents medium API.
@@ -103,16 +102,6 @@ func (c *Client) do(req *http.Request) (r rawbody, err error) {
 }
 
 func (c *Client) postArticle(mode, id string, a Article) (*PostedArticle, error) {
-	if a.PublishedAt == "" {
-		// I don't know why but Medium API doesn't accept the article published after UTC+07:00.
-		// For example, Japan Standard Time is UTC+09:00, so that the article posted from Japan will be rejected.
-		// We need set current UTC timezone to Etc/GMT-7 (+07:00) before formatting date and time.
-		local, err := time.LoadLocation("Etc/GMT-7")
-		if err != nil {
-			return nil, err
-		}
-		a.PublishedAt = time.Now().In(local).Format("2006-01-02T15:04:05+07:00")
-	}
 	if a.Title == "" {
 		return nil, fmt.Errorf("title of the article must not be blank")
 	}
@@ -122,10 +111,12 @@ func (c *Client) postArticle(mode, id string, a Article) (*PostedArticle, error)
 	if a.Content == "" {
 		return nil, fmt.Errorf("content should not be blank")
 	}
-	c.logger.Println(a.PublishStatus, a.PublishedAt)
 	content, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
+	}
+	if a.PublishedAt == "" {
+		content = bytes.Replace(content, []byte(`"publishedAt":"",`), []byte(``), -1)
 	}
 	path := fmt.Sprintf("/%s/%s/posts", mode, id)
 	req, err := c.newRequest("POST", path, bytes.NewReader(content))
